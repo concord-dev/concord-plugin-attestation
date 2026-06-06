@@ -1,0 +1,7 @@
+schema: ropa-v1
+version: "1"
+owner: dpo@acme.com
+signers: [dpo@acme.com]
+last_review_at: "2026-05-01T00:00:00Z"
+expires_at: "2027-05-01T00:00:00Z"
+attested_fields: [scope, lawful_basis, retention]
