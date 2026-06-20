@@ -1,4 +1,4 @@
-package main
+package attestation
 
 import (
 	"context"
@@ -23,7 +23,7 @@ expires_at: "2027-05-01T00:00:00Z"
 attested_fields: [scope, lawful_basis, retention]
 `), 0o644))
 
-	c := attestationCollector{}
+	c := Collector{}
 	out, err := c.Collect(context.Background(), plugin.EvidenceRef{
 		Type: "policy_attestation",
 		Params: map[string]any{
@@ -53,7 +53,7 @@ expires_at: "2024-01-01T00:00:00Z"
 attested_fields: [scope]
 `), 0o644))
 
-	c := attestationCollector{}
+	c := Collector{}
 	out, err := c.Collect(context.Background(), plugin.EvidenceRef{
 		Type: "policy_attestation",
 		Params: map[string]any{
@@ -77,7 +77,7 @@ last_review_at: "2026-05-01T00:00:00Z"
 attested_fields: [parties, term]
 `), 0o644))
 
-	c := attestationCollector{}
+	c := Collector{}
 	out, err := c.Collect(context.Background(), plugin.EvidenceRef{
 		Type: "policy_attestation",
 		Params: map[string]any{
@@ -92,13 +92,13 @@ attested_fields: [parties, term]
 }
 
 func TestCollect_RejectsUnsupportedType(t *testing.T) {
-	c := attestationCollector{}
+	c := Collector{}
 	_, err := c.Collect(context.Background(), plugin.EvidenceRef{Type: "other"})
 	assert.ErrorIs(t, err, plugin.ErrUnsupportedType)
 }
 
 func TestCollect_RequiresSchemaParam(t *testing.T) {
-	c := attestationCollector{}
+	c := Collector{}
 	_, err := c.Collect(context.Background(), plugin.EvidenceRef{Type: "policy_attestation"})
 	require.Error(t, err)
 }
@@ -107,7 +107,7 @@ func TestCollect_RejectsSchemaMismatch(t *testing.T) {
 	dir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "x.yaml"),
 		[]byte("schema: other-v1\nversion: \"1\"\n"), 0o644))
-	c := attestationCollector{}
+	c := Collector{}
 	_, err := c.Collect(context.Background(), plugin.EvidenceRef{
 		Type: "policy_attestation",
 		Params: map[string]any{

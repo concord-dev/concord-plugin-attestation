@@ -1,5 +1,5 @@
-// concord-plugin-attestation reads signed YAML attestations from disk and emits structured evidence.
-package main
+// Package attestation reads signed YAML attestations from disk and emits structured evidence.
+package attestation
 
 import (
 	"context"
@@ -19,9 +19,14 @@ const (
 	version = "v0.1.0"
 )
 
-type attestationCollector struct{}
+// Collector answers the "policy_attestation" evidence type by reading signed
+// YAML attestations from disk.
+type Collector struct{}
 
-func (attestationCollector) Capabilities() plugin.Capabilities {
+// New returns an attestation collector.
+func New() *Collector { return &Collector{} }
+
+func (Collector) Capabilities() plugin.Capabilities {
 	return plugin.Capabilities{
 		Source:         source,
 		Version:        version,
@@ -34,7 +39,7 @@ func (attestationCollector) Capabilities() plugin.Capabilities {
 	}
 }
 
-func (attestationCollector) Probe(_ context.Context) (string, error) {
+func (Collector) Probe(_ context.Context) (string, error) {
 	dir := os.Getenv("CONCORD_ATTESTATION_DIR")
 	if dir == "" {
 		dir = filepath.Join(".", "attestations")
@@ -49,7 +54,7 @@ func (attestationCollector) Probe(_ context.Context) (string, error) {
 	return fmt.Sprintf("attestation plugin OK (root=%s)", dir), nil
 }
 
-func (attestationCollector) Collect(_ context.Context, ref plugin.EvidenceRef) (any, error) {
+func (Collector) Collect(_ context.Context, ref plugin.EvidenceRef) (any, error) {
 	if ref.Type != "policy_attestation" {
 		return nil, plugin.ErrUnsupportedType
 	}
@@ -203,5 +208,3 @@ func rfcTime(t time.Time) string {
 	}
 	return t.UTC().Format(time.RFC3339)
 }
-
-func main() { plugin.Serve(attestationCollector{}) }
