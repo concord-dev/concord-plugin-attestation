@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	plugin "github.com/concord-dev/concord/pkg/plugin"
+	plugin "github.com/concord-dev/concord-plugin-sdk/plugin"
 )
 
 func TestCollect_ParsesAttestationAndAppliesMaxAge(t *testing.T) {

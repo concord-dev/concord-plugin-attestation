@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	plugin "github.com/concord-dev/concord/pkg/plugin"
+	plugin "github.com/concord-dev/concord-plugin-sdk/plugin"
 	"sigs.k8s.io/yaml"
 )
 
