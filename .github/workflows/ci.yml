@@ -11,7 +11,7 @@ concurrency:
 
 env:
   # Keep in lockstep with go.mod.
-  GO_VERSION: '1.25.11'
+  GO_VERSION: '1.25.12'
 
 # The plugin SDK is consumed as a published module
 # (github.com/concord-dev/concord-plugin-sdk); every job is a clean single-repo
