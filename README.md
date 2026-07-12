@@ -19,6 +19,7 @@ make install
 ## Attestation file shape
 
 ```yaml
+kind: ropa                 # the attestation kind controls read as input.<id>.kind
 schema: ropa-v1            # must match params.schema in the control YAML
 version: "1"
 owner: dpo@acme.com
@@ -26,11 +27,18 @@ signers:
   - dpo@acme.com
 last_review_at: "2026-05-01T00:00:00Z"
 expires_at:    "2027-05-01T00:00:00Z"
-attested_fields:
-  - scope
-  - lawful_basis
-  - retention
+attested_fields:           # a structured MAP of the attested content
+  scope: all EU customer personal data
+  lawful_basis: contract
+  retention: 7y
+signature: "<base64 Ed25519 signature over the canonical content>"
 ```
+
+Controls read the emitted payload as `input.<id>.kind`,
+`input.<id>.attested_fields.<field>` (a map), and
+`input.<id>.signature_verified` (bool), plus the envelope fields (`owner`,
+`signers`, `last_review_at`, `expires_at`). This shape is pinned by the
+`attestation/policy_attestation` EvidenceType schema.
 
 ## Wire to a control
 
@@ -58,9 +66,35 @@ concord scaffold control --pack gdpr --id GDPR-30 --template policy-attestation
 | Env var | Default | Meaning |
 |---|---|---|
 | `CONCORD_ATTESTATION_DIR` | `./attestations` | Root searched when `params.path` is empty |
+| `CONCORD_ATTESTATION_PUBKEYS` | _(none)_ | Trusted Ed25519 signing public keys (base64), whitespace- or comma-separated. A signature verifies only against a key listed here (or in `params.public_keys`). |
 
 ## Signature verification
 
-Today the plugin checks that one of the named signers appears in the
-attestation's `signers:` list. Future versions will verify a detached
-cosign signature alongside the YAML; the wire shape is forward-compatible.
+`signature_verified` is a real cryptographic check, not an honour system. The
+`signature:` field is a base64 **Ed25519** signature over the *canonical
+content* of the attestation — the deterministic JSON of every field except
+`signature` (`encoding/json` sorts all map keys, so signer and verifier agree
+byte-for-byte). The plugin verifies it against the operator's trusted keys
+(`params.public_keys` or `CONCORD_ATTESTATION_PUBKEYS`) and **fails closed**: an
+absent signature, no configured keys, or an untrusted/invalid signature all
+yield `signature_verified: false`, which the attestation controls treat as a
+deny.
+
+The `signers:` list and `params.signers` remain an independent, advisory check
+(a `signer_warning` when a required approver's name is absent) — orthogonal to
+the cryptographic verification.
+
+### Signing an attestation
+
+Sign the canonical content with an Ed25519 private key and embed the base64
+signature. The canonical bytes are `json.Marshal` of:
+
+```json
+{"attested_fields":{…},"expires_at":"…","kind":"…","last_review_at":"…","owner":"…","schema":"…","signers":[…],"version":"…"}
+```
+
+```go
+sig := ed25519.Sign(priv, canonicalJSON)        // canonicalJSON as above
+signatureField := base64.StdEncoding.EncodeToString(sig)
+// distribute base64(pub) to verifiers via CONCORD_ATTESTATION_PUBKEYS
+```

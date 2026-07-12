@@ -1,7 +1,14 @@
+kind: ropa
 schema: ropa-v1
 version: "1"
 owner: dpo@acme.com
 signers: [dpo@acme.com]
 last_review_at: "2026-05-01T00:00:00Z"
 expires_at: "2027-05-01T00:00:00Z"
-attested_fields: [scope, lawful_basis, retention]
+attested_fields:
+  scope: all EU customer personal data processed by Acme services
+  lawful_basis: contract
+  retention: 7y
+  controller: Acme Co
+# signature: <base64 Ed25519 over the canonical content>, verified against a
+# trusted key from params.public_keys or CONCORD_ATTESTATION_PUBKEYS.
